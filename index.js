@@ -45,17 +45,14 @@ connection.connect(function (err) {
     askQuestions();
 });
 
-function getDepartments() {
-    let departments = [];
-    connection.query('SELECT name FROM department', function (err, data) {
-        if (err) throw err;
-        data.forEach(element => departments.push(element.name));
-    })
-    return departments;
+async function getRoleId(role_id) {
+    connection.query('SELECT title FROM role WHERE id = ?', role_id, function (err, role) {
+        if (err) throw err;        
+        return role[0].title;
+    });
 }
 
 function askQuestions() {
-    getDepartments();
     inquirer.prompt({
         message: "what would you like to do?",
         type: "list",
@@ -69,7 +66,6 @@ function askQuestions() {
         ],
         name: "choice"
     }).then(answers => {
-        // console.log(answers);
         switch (answers.choice) {
             case "View all employees":
                 getAllEmployees()
@@ -109,7 +105,6 @@ function getAllEmployees() {
 function getEmployeesByDepartment() {
     connection.query('SELECT name FROM department', function (err, results) {
         if (err) throw err;
-        //console.log(results[0].name);
         
         inquirer
             .prompt({
@@ -133,11 +128,16 @@ function getEmployeesByDepartment() {
                 {
                     if (results[index].name === answer.choice) chosenDpt = ++index;
                 }          
-                let query = 'SELECT * FROM employee WHERE manager_id = ? ';
+                // let query = 'SELECT * FROM employee WHERE manager_id = ? ';
+                connection.query('SELECT title FROM role WHERE id = ?', role_id, function (err, role) {
+                    if (err) throw err;        
+                    return role[0].title;
+                });
+                let query = 'SELECT employee.first_name, employee.last_name, employee.role_id, employee.manager_id, role.id, role.title, role.salary FROM employee INNER JOIN role ON employee.role_id = role.id AND employee.manager_id = ?';
                 connection.query(query, chosenDpt, function (err, data) {
                     if (err) throw err;
                     console.table(data);
-                       askQuestions();
+                    askQuestions();
                 })
             })
     });
