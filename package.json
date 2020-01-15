@@ -1,0 +1,24 @@
+{
+  "name": "employeemanager",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/patorrad/employeeManager.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/patorrad/employeeManager/issues"
+  },
+  "homepage": "https://github.com/patorrad/employeeManager#readme",
+  "dependencies": {
+    "inquirer": "^7.0.3",
+    "mysql": "^2.17.1",
+    "printf": "^0.5.2"
+  }
+}
