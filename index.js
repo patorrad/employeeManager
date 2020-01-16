@@ -24,28 +24,23 @@ var connection = mysql.createConnection({
 connection.connect(function (err) {
     if (err) throw err;
     console.log("connected as id " + connection.threadId + "\n");
+    mainHeader();
     askQuestions();
 });
 
-async function getRoleId(role_id) {
-    connection.query('SELECT title FROM role WHERE id = ?', role_id, function (err, role) {
-        if (err) throw err;        
-        return role[0].title;
-    });
-}
-
 function askQuestions() {
-    mainHeader();
     inquirer.prompt({
         message: "what would you like to do?",
         type: "list",
         choices: [
             "View all employees",
             "View all employees by department",
-            "Add employee",
-            "Remove employee",
             "View all roles",
-            "QUIT"
+            "Add employee",
+            "Add department",
+            "Add role",
+            "Update employee role",
+            "QUIT"            
         ],
         name: "choice"
     }).then(answers => {
@@ -58,16 +53,24 @@ function askQuestions() {
                 getEmployeesByDepartment()
                 break;
 
+            case "View all roles":
+                getAllRoles()
+                break;
+
             case "Add employee":
                 addEmployee()
                 break;
 
-            case "Remove employee":
-                getSongData()
+            case "Add department":
+                addDepartment()
                 break;
 
-            case "View all roles":
-                chartTimeRelease()
+            case "Add role":
+                addRole()
+                break;
+
+            case "Update employee role":
+                updateRole()
                 break;
 
             default:
@@ -138,19 +141,15 @@ function getEmployeesByDepartment() {
             })
     });
 }
-//SELECT * FROM employee.first_name, employee.last_name, manager.first_name AS manager_First, manager_last LEFT JOIN employee AS manager ON employee.manager_id = manager.id
 
-//SELECT * FROM employee.first_name, employee.last_name, manager.first_name AS manager_First, manager_last 
-//LEFT JOIN empoloyee AS manager ON employee.manager_id = manager.id
-//JOIN role ON employee.role_id = role.id
-
-//SELECT employee.id as 'Employee ID', employee.first_name AS 'First Name', employee.last_name AS 'Last Name', role.title AS 'Role', role.salary AS 'Salary',
-//department.name AS 'Department', manager.first_name AS 'Manager First', manager.last_name AS 'Manager Last'
-//FROM employee 
-//LEFT JOIN employee ON employee.manager_id = manager.id
-//LEFT JOIN role ON employee.role_id = role.id
-//LEFT JOIN department ON role.department_id = department_id;
-
+function getAllRoles() {    
+    connection.query('SELECT role.title, role.salary, department.name FROM department JOIN role ON role.department_id = department.id', function (err, res)
+    {
+        if (err) throw err;
+        console.table(res);    
+        askQuestions();    
+    })
+}
 
 function addEmployee() {
     let roles;
@@ -201,9 +200,7 @@ function addEmployee() {
         }])
       .then(function(answer) {
         for(var index = 1; index >= roles.length; index++){
-            if (roles[index].title === answer.role);
-            console.log(roles[index].title, answer.role, index);            
-            break;
+            if (roles[index].title === answer.role) break;
         } 
         connection.query("INSERT INTO employee SET ?", 
         {
@@ -219,35 +216,137 @@ function addEmployee() {
       });
   }
 
-function getRangedData() {
-    inquirer.prompt([
+  function addDepartment() {
+  
+    inquirer
+      .prompt([{
+            name: "department",
+            type: "input",
+            message: "What is new department name?"
+        }])
+      .then(function(answer) {
+        connection.query("INSERT INTO department SET ?", 
         {
-            type: "number",
-            name: "start",
-            message: "which position to start at?"
+            name: answer.department          
+        }, function (err, res) {
+            if (err) throw err;
+            console.log("Employee was added to the database.");
+            askQuestions();
+        });
+        
+      });
+  }
+
+  function addRole() {
+    var departments;
+    connection.query('SELECT name FROM department', function (err, res)
+    {
+        if (err) throw err;
+        departments = res;    
+    }) 
+    inquirer
+      .prompt([{
+            name: "role",
+            type: "input",
+            message: "What is new role title?"
         },
         {
-            type: "number",
-            name: "end",
-            message: "which position to end at?"
+            name: "salary",
+            type: "input",
+            message: "What is new role salary"
+        },
+        {
+            name: "department",
+            type: "list",
+            message: "What is the department of the new role?",
+            choices: function() {
+                return departments;
+            }
         }
-    ]).then(function (rangedAnswers) {
-        console.log(rangedAnswers);
-        connection.query('SELECT * FROM top5000 WHERE position BETWEEN ? AND ?', [rangedAnswers.start, rangedAnswers.end], function (err, data) {
+    ])
+      .then(function(answer) {
+        for(var index = 1; index >= departments.length; index++){
+            if (departments[index] === answer.department) break;
+        } 
+        connection.query("INSERT INTO role SET ?", 
+        {
+            title: answer.role,
+            salary: answer.salary,
+            department_id: index
+
+        }, function (err, res) {
             if (err) throw err;
-            console.table(data);
+            console.log("Employee was added to the database.");
             askQuestions();
-        })
-    })
-}
+        });
+        
+      });
+  }
 
-function getMultiEntryArtistData() {
-    connection.query(" SELECT artist, COUNT(artist) AS count FROM top5000 GROUP BY artist HAVING count>1 ORDER BY count DESC",function(err,data){
-        if(err) throw err;
-        console.table(data);
+function updateRole() {  
+    var first_names = [];
+    var last_names = [];
+    var roles;
+    connection.query('SELECT first_name, last_name FROM employee', function (err, res)
+    {
+        if (err) throw err;
+        res.forEach( element => first_names.push(element.first_name));
+        res.forEach( element => last_names.push(element.last_name));
+    console.log(first_names);
     })
+    connection.query('SELECT role.title FROM role', function (err, res)
+    {
+        if (err) throw err;
+        roles = res;        
+    })
+    
+    inquirer
+      .prompt([
+        {
+            name: "first_name",
+            type: "list",
+            message: "Choose employee first name:",
+            choices: function() {
+                return first_names;
+            }
+        },
+        {
+            name: "last_name",
+            type: "list",
+            message: "Choose employee last name:",
+            choices: function() {
+                return last_names;
+            }
+        },
+        {
+            name: "role",
+            type: "list",
+            message: "What is the employee's role",
+            choices: function() {
+                return roles;
+            }
+        }])
+      .then(function(answer) {
+        for(var index = 1; index >= roles.length; index++){
+            if (roles[index] === answer.role) break;
+        }         
+        connection.query("UPDATE employee SET ? WHERE ?",
+        [
+        {
+            role_id: index,
+        },
+        {
+            first_name: answer.first_name,
+            last_name: answer.last_name
+        }
+        ], function (err, res)
+        {
+            if (err) throw err;
+            console.table(res);    
+            askQuestions();    
+        });
+    });
 }
-
 
 function mainHeader() {
     console.log("////////////////////////////////////////////////////////////");
