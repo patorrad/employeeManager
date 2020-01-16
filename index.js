@@ -6,24 +6,6 @@ const mysql  = require('mysql');
 const employee   = "employee";
 const role       = "role";
 const department = "department";
-// let departments = [
-//     { 
-//         name: "Engineering",
-//         key: 1
-//     },
-//     {
-//         name: "Sales",
-//         key: "2"
-//     },
-//     {
-//         name: "Legal",
-//         key: 3
-//     },
-//     {
-//         name: "Finance",
-//         key: 4
-//     }
-// ];
 
 var connection = mysql.createConnection({
     host: "localhost",
@@ -53,6 +35,7 @@ async function getRoleId(role_id) {
 }
 
 function askQuestions() {
+    mainHeader();
     inquirer.prompt({
         message: "what would you like to do?",
         type: "list",
@@ -76,7 +59,7 @@ function askQuestions() {
                 break;
 
             case "Add employee":
-                getMultiEntryArtistData()
+                addEmployee()
                 break;
 
             case "Remove employee":
@@ -168,22 +151,71 @@ function getEmployeesByDepartment() {
 //LEFT JOIN role ON employee.role_id = role.id
 //LEFT JOIN department ON role.department_id = department_id;
 
-function artistSearch() {
+
+function addEmployee() {
+    let roles;
+    let managers;
+    connection.query('SELECT title FROM role', function (err, res)
+    {
+        if (err) throw err;
+        roles = res;
+        
+    })
+    connection.query('SELECT * FROM employee WHERE manager_id IS null', function (err, res)
+    {
+        if (err) throw err;
+        managers = res;    
+    })   
     inquirer
-      .prompt({
-        name: "artist",
-        type: "input",
-        message: "What artist would you like to search for?"
-      })
+      .prompt([{
+            name: "first_name",
+            type: "input",
+            message: "What is the employee's first name?"
+        },
+        {
+            name: "last_name",
+            type: "input",
+            message: "What is the employee's last name?"
+        },
+        {
+            name: "role",
+            type: "list",
+            choices: function() {
+                var choiceArray = [];
+                for (var i = 0; i < roles.length; i++) {
+                    choiceArray.push(roles[i].title);
+                }
+                return choiceArray;
+            }        
+        },
+        {
+            name: "manager",
+            type: "list",
+            choices: function() {
+                var choiceArray = [];
+                for (var i = 0; i < managers.length; i++) {
+                    choiceArray[i] = managers[i].first_name + " " + managers[i].last_name;
+                }
+                return choiceArray;
+            }
+        }])
       .then(function(answer) {
-        var query = "SELECT position, song, year FROM top5000 WHERE ?";
-        connection.query(query, { artist: answer.artist }, function(err, res) {
-          if (err) throw err;
-          for (var i = 0; i < res.length; i++) {
-            console.log("Position: " + res[i].position + " || Song: " + res[i].song + " || Year: " + res[i].year);
-          }
-          runSearch();
+        for(var index = 1; index >= roles.length; index++){
+            if (roles[index].title === answer.role);
+            console.log(roles[index].title, answer.role, index);            
+            break;
+        } 
+        connection.query("INSERT INTO employee SET ?", 
+        {
+            first_name: answer.first_name,
+            last_name: answer.last_name,
+            role_id: index           
+        }, function (err, res) {
+            if (err) throw err;
+            console.log("Employee was added to the database.");
+            askQuestions();
         });
+        
       });
   }
 
