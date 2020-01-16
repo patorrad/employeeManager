@@ -286,66 +286,69 @@ function addEmployee() {
 function updateRole() {  
     var first_names = [];
     var last_names = [];
-    var roles;
+    var roles = [];
     connection.query('SELECT first_name, last_name FROM employee', function (err, res)
     {
         if (err) throw err;
         res.forEach( element => first_names.push(element.first_name));
         res.forEach( element => last_names.push(element.last_name));
-    console.log(first_names);
-    })
-    connection.query('SELECT role.title FROM role', function (err, res)
-    {
-        if (err) throw err;
-        roles = res;        
-    })
-    
-    inquirer
-      .prompt([
-        {
-            name: "first_name",
-            type: "list",
-            message: "Choose employee first name:",
-            choices: function() {
-                return first_names;
-            }
-        },
-        {
-            name: "last_name",
-            type: "list",
-            message: "Choose employee last name:",
-            choices: function() {
-                return last_names;
-            }
-        },
-        {
-            name: "role",
-            type: "list",
-            message: "What is the employee's role",
-            choices: function() {
-                return roles;
-            }
-        }])
-      .then(function(answer) {
-        for(var index = 1; index >= roles.length; index++){
-            if (roles[index] === answer.role) break;
-        }         
-        connection.query("UPDATE employee SET ? WHERE ?",
-        [
-        {
-            role_id: index,
-        },
-        {
-            first_name: answer.first_name,
-            last_name: answer.last_name
-        }
-        ], function (err, res)
+        connection.query('SELECT role.title FROM role', function (err, res)
         {
             if (err) throw err;
-            console.table(res);    
-            askQuestions();    
-        });
-    });
+            res.forEach( element => roles.push(element.title));  
+            inquirer
+                .prompt([
+                    {
+                        name: "first_name",
+                        type: "list",
+                        message: "Choose employee first name:",
+                        choices: function() {
+                            return first_names;
+                        }
+                    },
+                    {
+                        name: "last_name",
+                        type: "list",
+                        message: "Choose employee last name:",
+                        choices: function() {
+                            return last_names;
+                        }
+                    },
+                    {
+                        name: "role",
+                        type: "list",
+                        message: "What is the employee's role",
+                        choices: function() {
+                            return roles;
+                        }
+                    }])
+                .then(function(answer) {
+                    for(var index = 1; index >= roles.length; index++){
+                        if (roles[index] === answer.role) break;
+                    }         
+                    connection.query("UPDATE employee SET ? WHERE ? AND ?",
+                    [
+                    {
+                        role_id: index,
+                    },
+                    {
+                        first_name: answer.first_name
+                    },
+                    {
+                        last_name: answer.last_name
+                    }
+                    ], function (err, res)
+                    {
+                        if (err) throw err;
+                        console.log("Employee updated");                           
+                        askQuestions();    
+                    });
+                });
+        })
+    })
+    
+    
+    
 }
 
 function mainHeader() {
