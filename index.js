@@ -95,8 +95,13 @@ function askQuestions() {
 }
 
 function getAllEmployees() {    
-    connection.query('SELECT * FROM employee', function (err, data) {
+    connection.query('SELECT employee.first_name AS `First Name`, employee.last_name `Last Name`, employee.role_id, employee.manager_id, role.id, role.title AS `Role`, role.salary AS `Salary` FROM employee INNER JOIN role ON employee.role_id = role.id', function (err, data) {
         if (err) throw err;
+        data.forEach( element => {
+            delete element.role_id;
+            delete element.manager_id;
+            delete element.id;
+        })
         console.table(data);
         askQuestions();
     })
@@ -129,19 +134,39 @@ function getEmployeesByDepartment() {
                     if (results[index].name === answer.choice) chosenDpt = ++index;
                 }          
                 // let query = 'SELECT * FROM employee WHERE manager_id = ? ';
-                connection.query('SELECT title FROM role WHERE id = ?', role_id, function (err, role) {
-                    if (err) throw err;        
-                    return role[0].title;
+                let managerInfo = [];
+                connection.query('SELECT employee.first_name AS `First Name`, employee.last_name AS `Last Name`, employee.role_id, employee.manager_id, role.id, role.title AS `Role`, role.salary AS `Salary` FROM employee JOIN role ON employee.role_id = ? AND role.title = ? AND role.department_id = ?', [ chosenDpt, 'Manager', chosenDpt], function (err, manager) {
+                        if (err) throw err;        
+                        managerInfo = manager;
                 });
-                let query = 'SELECT employee.first_name, employee.last_name, employee.role_id, employee.manager_id, role.id, role.title, role.salary FROM employee INNER JOIN role ON employee.role_id = role.id AND employee.manager_id = ?';
+               
+                let query = 'SELECT employee.first_name AS `First Name`, employee.last_name `Last Name`, employee.role_id, employee.manager_id, role.id, role.title AS `Role`, role.salary AS `Salary` FROM employee INNER JOIN role ON employee.role_id = role.id AND employee.manager_id = ?';
                 connection.query(query, chosenDpt, function (err, data) {
                     if (err) throw err;
+                    data.push(managerInfo[0]);
+                    data.forEach(element => {
+                        delete element.role_id;
+                        delete element.manager_id;
+                        delete element.id;
+                    });
                     console.table(data);
                     askQuestions();
                 })
             })
     });
 }
+//SELECT * FROM employee.first_name, employee.last_name, manager.first_name AS manager_First, manager_last LEFT JOIN employee AS manager ON employee.manager_id = manager.id
+
+//SELECT * FROM employee.first_name, employee.last_name, manager.first_name AS manager_First, manager_last 
+//LEFT JOIN empoloyee AS manager ON employee.manager_id = manager.id
+//JOIN role ON employee.role_id = role.id
+
+//SELECT employee.id as 'Employee ID', employee.first_name AS 'First Name', employee.last_name AS 'Last Name', role.title AS 'Role', role.salary AS 'Salary',
+//department.name AS 'Department', manager.first_name AS 'Manager First', manager.last_name AS 'Manager Last'
+//FROM employee 
+//LEFT JOIN employee ON employee.manager_id = manager.id
+//LEFT JOIN role ON employee.role_id = role.id
+//LEFT JOIN department ON role.department_id = department_id;
 
 function artistSearch() {
     inquirer
@@ -193,19 +218,19 @@ function getMultiEntryArtistData() {
 
 
 function mainHeader() {
-    console.log(printf("////////////////////////////////////////////////////////////"));
-    console.log(printf("/                                                          /"));
-    console.log(printf("/     ////  /   /  ////  /    ///  /   /  ////  ////       /"));
-    console.log(printf("/     /     // //  /  /  /    / /   / /   /     /          /"));
-    console.log(printf("/     //    / / /  ////  /    / /    /    //    //         /"));
-    console.log(printf("/     /     /   /  /     /    / /    /    /     /          /"));
-    console.log(printf("/     ////  /   /  /     ///  ///    /    ////  ////       /"));
-    console.log(printf("/                                                          /"));
-    console.log(printf("/      /   /    /    /  /    /    ////  ////  ////         /"));
-    console.log(printf("/      // //   / /   // /   / /   /     /     /  /         /"));
-    console.log(printf("/      / / /   / /   / //   / /   / //  //    //           /"));
-    console.log(printf("/      /   /  /   /  /  /  /   /  /  /  /     / /          /"));
-    console.log(printf("/      /   /  /   /  /  /  /   /  ////  ////  /  /         /"));
-    console.log(printf("/                                                          /"));
-    console.log(printf("////////////////////////////////////////////////////////////"));
+    console.log("////////////////////////////////////////////////////////////");
+    console.log("/                                                          /");
+    console.log("/     ////  /   /  ////  /    ///  /   /  ////  ////       /");
+    console.log("/     /     // //  /  /  /    / /   / /   /     /          /");
+    console.log("/     //    / / /  ////  /    / /    /    //    //         /");
+    console.log("/     /     /   /  /     /    / /    /    /     /          /");
+    console.log("/     ////  /   /  /     ///  ///    /    ////  ////       /");
+    console.log("/                                                          /");
+    console.log("/      /   /    /    /  /    /    ////  ////  ////         /");
+    console.log("/      // //   / /   // /   / /   /     /     /  /         /");
+    console.log("/      / / /   / /   / //   / /   / //  //    //           /");
+    console.log("/      /   /  /   /  /  /  /   /  /  /  /     / /          /");
+    console.log("/      /   /  /   /  /  /  /   /  ////  ////  /  /         /");
+    console.log("/                                                          /");
+    console.log("////////////////////////////////////////////////////////////");
 }

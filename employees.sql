@@ -56,4 +56,7 @@ INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Paul"
 INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Linette", "Smith", 9, 1);
 INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES ("Karen", "Smith", 2, null);
 
-SELECT employee.first_name, employee.last_name, employee.role_id, employee.manager_id, role.id, role.title, role.salary FROM employee INNER JOIN role ON employee.role_id = role.id AND employee.manager_id = 1
+SELECT employee.first_name AS `First Name`, employee.last_name `Last Name`, employee.role_id, employee.manager_id, role.id, role.title AS `Role`, role.salary AS `Salary` 
+FROM employee 
+INNER JOIN role
+ON employee.role_id = role.id
